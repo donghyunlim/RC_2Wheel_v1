@@ -2,7 +2,6 @@
 import requests
 import socket
 
-
 def getserial():
   # Extract serial from cpuinfo file
   cpuserial = "0000000000000000"
@@ -22,7 +21,7 @@ SVR_BASE_ADDR = 'http://onffworld.iptime.org:33774' #todo: https 보안 스트�
 RESTFUL_EXPRESSION = '/registration/rc'
 # response = requests.post(SVR_BASE_ADDR+RESTFUL_EXPRESSION)
 
-typeOfRc = 'rc1'
+typeOfRc = 'Rc2WheelV1'
 ipv4Public = format(requests.get('https://api.ipify.org').text)
 # get ip address by google. we'll have to check it always return private addr.
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -30,8 +29,12 @@ s.connect(("8.8.8.8", 80))
 ipv4Private = s.getsockname()[0]
 s.close()
 # ipv4Private = socket.gethostbyname(socket.gethostname()) #if /etc/hosts describes lo, then always return 127.0.0.1
+ipaddrLastThree = ipv4Private.split('.')
+wantedDdnsMediasvrPort = 35000+int(ipaddrLastThree[3])
+wantedDdnsWebsvrPort = 25000+int(ipaddrLastThree[3])
 
-infos = {'type_of_rc': typeOfRc, 'serial_of_rc': getserial(), 'ipv4_private': ipv4Private, 'ipv4_public':ipv4Public}
+infos = {'type_of_rc': typeOfRc, 'serial_of_rc': getserial(), 'ipv4_private': ipv4Private, 'ipv4_public':ipv4Public
+          , 'wanted_ddns_websvr_port':wantedDdnsWebsvrPort, 'wanted_ddns_mediasvr_port':wantedDdnsMediasvrPort}
 response = requests.post(SVR_BASE_ADDR+RESTFUL_EXPRESSION, data=infos)
 
 try:

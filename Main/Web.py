@@ -12,23 +12,14 @@ import pigpio #importing GPIO library
 # Raspberry Pi PWN PIN 12, 13, 18, 19
 import RegistrationToSvr
 
-ESC=4
-ESC_WEAPON=5
-
-CAMERA_X = 22
-CAMERA_Y = 23
-STEER = 27
-
-Camera_X_MAX = 2500 # 2520, on origin code
-Camera_X_MIN = 520
-Camera_Y_MAX = 1520
-Camera_Y_MIN = 800
-
-Camera_X = 1520
-Camera_Y = 1000
+##left wheel
+ESC_LEFT=14
+##right wheel
+ESC_RIGHT=15
 
 pi = pigpio.pi()
-pi.set_servo_pulsewidth(ESC, 0) 
+pi.set_servo_pulsewidth(ESC_LEFT, 0) 
+pi.set_servo_pulsewidth(ESC_RIGHT, 0) 
 
 RegistrationToSvr.__name__ #Do registration work to onff local server.
 
@@ -49,22 +40,15 @@ def connectionCheck():
 	return "working Fine"
 	
 @app.route("/arm")
-def arm():  
-	#weapon
-	pi.set_servo_pulsewidth(ESC_WEAPON, 1500)
-	# pi.set_PWM_frequency(ESC_WEAPON,50)
+def arm():
 	#movement
-	pi.set_servo_pulsewidth(ESC, 1500)
-	pi.set_PWM_frequency(STEER,50)
-	pi.set_servo_pulsewidth(STEER,0)
-	#camera
-	pi.set_PWM_frequency(CAMERA_X,50) #Hz, (pulse 1.52ms)---(rest 18.48ms)---(pulse 1.52ms)
-	pi.set_servo_pulsewidth(CAMERA_X,1520) #1.52ms, 500(min) - 2500(max)
-	pi.set_PWM_frequency(CAMERA_Y,50) #Hz, (pulse 1.52ms)---(rest 18.48ms)---(pulse 1.52ms)
-	pi.set_servo_pulsewidth(CAMERA_Y,1520)
+	pi.set_servo_pulsewidth(ESC_LEFT, 1500)
+	pi.set_servo_pulsewidth(ESC_RIGHT, 1500)
+	# pi.set_PWM_frequency(STEER,50)
 	time.sleep(1)
 	return "ready"
 	
+#do not use
 @app.route("/intialize")
 def initialize():
 	pi.set_servo_pulsewidth(ESC, 0)
@@ -86,36 +70,8 @@ def initialize():
 	time.sleep(1)
 	print ("See.... uhhhhh")
             
-
-# @app.route("/moving")
-# def movingCar():
-# 	dir = request.args.get("dir")
-# 	if dir == "gostraight":
-# 		velocity = int(request.args.get("vel")) #0~10 from mobile.
-# 		pi.set_servo_pulsewidth(ESC, int(Clamp(1500-velocity*40,1100,1500)))
-# 	elif dir == "goright":
-# 		velocity = int(request.args.get("vel")) #0~10 from mobile.
-# 		pi.set_servo_pulsewidth(ESC, int(Clamp(1500-velocity*40,1100,1500)))
-# 		pi.set_servo_pulsewidth(STEER, int(Clamp(1710+velocity,1710,1720)))
-# 	elif dir == "goleft":
-# 		velocity = int(request.args.get("vel")) #0~10 from mobile.
-# 		pi.set_servo_pulsewidth(ESC, int(Clamp(1500-velocity*40,1100,1500)))
-# 		pi.set_servo_pulsewidth(STEER, int(Clamp(1310+velocity,1310,1320)))
-# 	elif dir == "backstraight":
-# 		velocity = int(request.args.get("vel")) #0~10 from mobile.
-# 		pi.set_servo_pulsewidth(ESC, int(Clamp(1500+velocity*40,1500,1900)))
-# 	elif dir == "backright":
-# 		velocity = int(request.args.get("vel")) #0~10 from mobile.
-# 		pi.set_servo_pulsewidth(ESC, int(Clamp(1500+velocity*40,1500,1900)))
-# 		pi.set_servo_pulsewidth(STEER, int(Clamp(1710+velocity,1710,1720)))
-# 	elif dir == "backleft":
-# 		velocity = int(request.args.get("vel")) #0~10 from mobile.
-# 		pi.set_servo_pulsewidth(ESC, int(Clamp(1500+velocity*40,1500,1900)))
-# 		pi.set_servo_pulsewidth(STEER, int(Clamp(1310+velocity,1310,1320)))
-# 	return "moved"
-
-#good
-@app.route("/motor")
+#right wheel
+@app.route("/right")
 def motorControl(): 
 	state = request.args.get("state")
 	if state == "forward":
@@ -130,26 +86,23 @@ def motorControl():
 		pi.set_servo_pulsewidth(ESC, 1500)
 	return "Checked: " + state
 	
-#good
-@app.route("/steer")
+#left wheel
+@app.route("/left")
 def steerContorl():
-	dir = request.args.get("dir")
-	if dir == "right":
-		velocity = int(request.args.get("vel"))
-		pi.set_servo_pulsewidth(STEER, int(Clamp(1500+velocity*30,1200,1500)))
-		# pi.set_servo_pulsewidth(STEER, int(Clamp(1710+velocity,1710,1720)))
-		# pi.set_servo_pulsewidth(STEER,1720)
-	elif dir == "left":
-		velocity = int(request.args.get("vel"))
-		pi.set_servo_pulsewidth(STEER, int(Clamp(1500-velocity*30,1500,1800)))
-		# pi.set_servo_pulsewidth(STEER, int(Clamp(1310-velocity,1310,1320)))
-		# pi.set_servo_pulsewidth(STEER,1320)
-	elif dir == "straight": #not use
-		# pi.set_servo_pulsewidth(STEER, int(Clamp(1510+velocity,1510,1520)))
-		pi.set_servo_pulsewidth(STEER,1500)
-	return "steered"
+	state = request.args.get("state")
+	if state == "forward":
+		velocity = int(request.args.get("vel")) #0~10 from mobile.
+		pi.set_servo_pulsewidth(ESC, int(Clamp(1500-velocity*40,1100,1500)))
+	elif state == "rear":
+		velocity = int(request.args.get("vel")) #0~10 from mobile.
+		pi.set_servo_pulsewidth(ESC, int(Clamp(1500+velocity*40,1500,1900)))
+	elif state == "stop":
+		pi.set_servo_pulsewidth(ESC, 1500)
+	else: 
+		pi.set_servo_pulsewidth(ESC, 1500)
+	return "Checked: " + state
 
-#WEAPON1_blade
+#WEAPON1_blade(not yet)
 @app.route("/weapon1")
 def weapon1Control(): 
 	state = request.args.get("state")
@@ -161,7 +114,8 @@ def weapon1Control():
 	else: 
 		pi.set_servo_pulsewidth(ESC_WEAPON, 1400)
 	return "Checked: " + state
- 
+
+#Not used 
 @app.route("/camera")
 def cameraControl():
 	global Camera_X,Camera_Y
