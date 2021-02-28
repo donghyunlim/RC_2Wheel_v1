@@ -11,17 +11,23 @@ time.sleep(1) # As i said it is too impatient and so if this delay is removed yo
 import pigpio #importing GPIO library
 # Raspberry Pi PWN PIN 12, 13, 18, 19
 import RegistrationToSvr
+import GpioController
 
 ##left wheel
 ESC_LEFT=14
 ##right wheel
 ESC_RIGHT=15
+INJORA35T_STOP=1400
+
 
 pi = pigpio.pi()
 pi.set_servo_pulsewidth(ESC_LEFT, 0) 
 pi.set_servo_pulsewidth(ESC_RIGHT, 0) 
 
 RegistrationToSvr.__name__ #Do registration work to onff local server.
+# gpioController = GpioController.__name__ #GPIO fast-serized queue system(sort of)
+gpioController = GpioController.GpioController() #GPIO fast-serized queue system(sort of)
+gpioController.popDequePeriodically()
 
 app = Flask(__name__)
 
@@ -42,65 +48,83 @@ def connectionCheck():
 @app.route("/arm")
 def arm():
 	#movement
-	pi.set_servo_pulsewidth(ESC_LEFT, 1500)
-	pi.set_servo_pulsewidth(ESC_RIGHT, 1500)
+	# pi.set_servo_pulsewidth(ESC_LEFT, 1500)
+	# pi.set_servo_pulsewidth(ESC_RIGHT, 1500) 
+	gpioController.gpio_PIN_PWM(ESC_LEFT, 1500) # stop
+	gpioController.gpio_PIN_PWM(ESC_RIGHT, 1500) # stop
 	# pi.set_PWM_frequency(STEER,50)
 	time.sleep(1)
 	return "ready"
 	
 #do not use
-@app.route("/intialize")
-def initialize():
-	pi.set_servo_pulsewidth(ESC, 0)
-	print("Disconnect the battery")
-	time.sleep(1)
-	pi.set_servo_pulsewidth(ESC, max_value)
-	print("Connect the battery NOW.. you will here two beeps, then wait for a gradual falling tone then press Enter")
-	time.sleep(2)
-	pi.set_servo_pulsewidth(ESC, min_value)
-	print ("Wierd eh! Special tone")
-	time.sleep(7)
-	print ("Wait for it ....")
-	time.sleep (5)
-	print ("Im working on it, DONT WORRY JUST WAIT.....")
-	pi.set_servo_pulsewidth(ESC, 0)
-	time.sleep(2)
-	print ("Arming ESC now...")
-	pi.set_servo_pulsewidth(ESC, min_value)
-	time.sleep(1)
-	print ("See.... uhhhhh")
+# @app.route("/intialize")
+# def initialize():
+# 	pi.set_servo_pulsewidth(ESC, 0)
+# 	print("Disconnect the battery")
+# 	time.sleep(1)
+# 	pi.set_servo_pulsewidth(ESC, max_value)
+# 	print("Connect the battery NOW.. you will here two beeps, then wait for a gradual falling tone then press Enter")
+# 	time.sleep(2)
+# 	pi.set_servo_pulsewidth(ESC, min_value)
+# 	print ("Wierd eh! Special tone")
+# 	time.sleep(7)
+# 	print ("Wait for it ....")
+# 	time.sleep (5)
+# 	print ("Im working on it, DONT WORRY JUST WAIT.....")
+# 	pi.set_servo_pulsewidth(ESC, 0)
+# 	time.sleep(2)
+# 	print ("Arming ESC now...")
+# 	pi.set_servo_pulsewidth(ESC, min_value)
+# 	time.sleep(1)
+# 	print ("See.... uhhhhh")
             
+
+#!!IMPORTANT !!
+#!!this pwm value is ESC(quicrun1060) with INJORA 550 BRUSHED MOTOR 35T
+#totally different from another motor!!!
 #right wheel
-@app.route("/right")
+@app.route("/motor_right")
 def motorControl(): 
 	state = request.args.get("state")
 	if state == "forward":
 		velocity = int(request.args.get("vel")) #0~10 from mobile.
-		pi.set_servo_pulsewidth(ESC, int(Clamp(1500-velocity*40,1100,1500)))
-	elif state == "rear":
+		pwm = int(Clamp(INJORA35T_STOP-velocity*20,1100,INJORA35T_STOP))
+		# pi.set_servo_pulsewidth(ESC_RIGHT, int(Clamp(1500-velocity*40,1100,1500)))
+		gpioController.gpio_PIN_PWM(ESC_RIGHT, pwm)
+	elif state == "backward":
 		velocity = int(request.args.get("vel")) #0~10 from mobile.
-		pi.set_servo_pulsewidth(ESC, int(Clamp(1500+velocity*40,1500,1900)))
+		pwm = int(Clamp(INJORA35T_STOP+velocity*20,INJORA35T_STOP,1900))
+		# pi.set_servo_pulsewidth(ESC_RIGHT, int(Clamp(1500+velocity*40,1500,1900)))
+		gpioController.gpio_PIN_PWM(ESC_RIGHT, pwm)
 	elif state == "stop":
-		pi.set_servo_pulsewidth(ESC, 1500)
+		# pi.set_servo_pulsewidth(ESC_RIGHT, 1500)
+		gpioController.gpio_PIN_PWM(ESC_RIGHT, INJORA35T_STOP)
 	else: 
-		pi.set_servo_pulsewidth(ESC, 1500)
-	return "Checked: " + state
+		# pi.set_servo_pulsewidth(ESC_RIGHT, 1500)
+		gpioController.gpio_PIN_PWM(ESC_RIGHT, INJORA35T_STOP)
+	return ""
 	
 #left wheel
-@app.route("/left")
+@app.route("/motor_left")
 def steerContorl():
 	state = request.args.get("state")
 	if state == "forward":
 		velocity = int(request.args.get("vel")) #0~10 from mobile.
-		pi.set_servo_pulsewidth(ESC, int(Clamp(1500-velocity*40,1100,1500)))
-	elif state == "rear":
+		pwm = int(Clamp(INJORA35T_STOP-velocity*20,1100,INJORA35T_STOP))
+		# pi.set_servo_pulsewidth(ESC_LEFT, int(Clamp(1500-velocity*40,1100,1500)))
+		gpioController.gpio_PIN_PWM(ESC_LEFT, pwm)
+	elif state == "backward":
 		velocity = int(request.args.get("vel")) #0~10 from mobile.
-		pi.set_servo_pulsewidth(ESC, int(Clamp(1500+velocity*40,1500,1900)))
+		pwm = int(Clamp(INJORA35T_STOP+velocity*20,INJORA35T_STOP,1900))
+		# pi.set_servo_pulsewidth(ESC_LEFT, int(Clamp(1500+velocity*40,1500,1900)))
+		gpioController.gpio_PIN_PWM(ESC_LEFT, pwm)
 	elif state == "stop":
-		pi.set_servo_pulsewidth(ESC, 1500)
+		# pi.set_servo_pulsewidth(ESC_LEFT, 1500)
+		gpioController.gpio_PIN_PWM(ESC_LEFT, INJORA35T_STOP)
 	else: 
-		pi.set_servo_pulsewidth(ESC, 1500)
-	return "Checked: " + state
+		# pi.set_servo_pulsewidth(ESC_LEFT, 1500)
+		gpioController.gpio_PIN_PWM(ESC_LEFT, INJORA35T_STOP)
+	return ""
 
 #WEAPON1_blade(not yet)
 @app.route("/weapon1")
@@ -132,6 +156,7 @@ def cameraControl():
 	pi.set_servo_pulsewidth(CAMERA_X,Camera_X) # pin, pwm
 	pi.set_servo_pulsewidth(CAMERA_Y,Camera_Y) # pin, pwm
 	return "steered"
+
 if __name__ == "__main__":
 	app.run(host="0.0.0.0")
 
