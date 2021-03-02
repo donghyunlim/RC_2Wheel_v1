@@ -11,7 +11,8 @@ time.sleep(1) # As i said it is too impatient and so if this delay is removed yo
 import pigpio #importing GPIO library
 # Raspberry Pi PWN PIN 12, 13, 18, 19
 import RegistrationToSvr
-import GpioController
+import SmoothGpioController
+# import GpioController
 
 ##left wheel
 ESC_LEFT=12
@@ -29,8 +30,11 @@ pi.set_PWM_frequency(ESC_RIGHT,50)
 
 RegistrationToSvr.__name__ #Do registration work to onff local server.
 # gpioController = GpioController.__name__ #GPIO fast-serized queue system(sort of)
-gpioController = GpioController.GpioController() #GPIO fast-serized queue system(sort of)
+gpioController = SmoothGpioController.GpioController() #GPIO fast-serized queue system(sort of)
+# gpioController = GpioController.GpioController() #GPIO fast-serized queue system(sort of)
+gpioController.setOurDefaultPWM(INJORA35T_STOP, INJORA35T_WIDTH)
 gpioController.popDequePeriodically()
+# gpioController.popDequePeriodically()
 
 app = Flask(__name__)
 
