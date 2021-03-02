@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 #! /usr/bin/env python
+# -*- coding: utf-8 -*-
 # this Web.py also forks RegistrationToSvr.py - Donny
 # 단순 클라이언트의 post 요청을 받는 웹서버 였으나, 이제는 웹 담당일진
 # 사무실 내 서버컴퓨터와의 등록/세션핸들링, 미디어서버와의 접속, 클라이언트와의 접속 모든걸 담당한다.
@@ -14,15 +14,18 @@ import RegistrationToSvr
 import GpioController
 
 ##left wheel
-ESC_LEFT=14
+ESC_LEFT=12
 ##right wheel
-ESC_RIGHT=15
-INJORA35T_STOP=1400
+ESC_RIGHT=13
+INJORA35T_STOP=1500 #should be init. (by manually)
+INJORA35T_WIDTH=40 #*10 pwm, 40 means it has +-400 pwm.
 
 
 pi = pigpio.pi()
-pi.set_servo_pulsewidth(ESC_LEFT, 0) 
-pi.set_servo_pulsewidth(ESC_RIGHT, 0) 
+pi.set_servo_pulsewidth(ESC_LEFT, INJORA35T_STOP) #esc init
+pi.set_servo_pulsewidth(ESC_RIGHT, INJORA35T_STOP) #esc init
+pi.set_PWM_frequency(ESC_LEFT,50)
+pi.set_PWM_frequency(ESC_RIGHT,50)
 
 RegistrationToSvr.__name__ #Do registration work to onff local server.
 # gpioController = GpioController.__name__ #GPIO fast-serized queue system(sort of)
@@ -45,15 +48,17 @@ def Clamp(val,vMin,vMax):
 def connectionCheck(): 
 	return "working Fine"
 	
-@app.route("/arm")
+@app.route("/init")
 def arm():
 	#movement
 	# pi.set_servo_pulsewidth(ESC_LEFT, 1500)
 	# pi.set_servo_pulsewidth(ESC_RIGHT, 1500) 
+	pi.set_PWM_frequency(ESC_LEFT,50)
+	pi.set_PWM_frequency(ESC_RIGHT,50) # 20 times per a second.
 	gpioController.gpio_PIN_PWM(ESC_LEFT, 1500) # stop
 	gpioController.gpio_PIN_PWM(ESC_RIGHT, 1500) # stop
 	# pi.set_PWM_frequency(STEER,50)
-	time.sleep(1)
+	time.sleep(100)
 	return "ready"
 	
 #do not use
@@ -88,12 +93,16 @@ def motorControl():
 	state = request.args.get("state")
 	if state == "forward":
 		velocity = int(request.args.get("vel")) #0~10 from mobile.
-		pwm = int(Clamp(INJORA35T_STOP-velocity*20,1100,INJORA35T_STOP))
+		pwm = int(Clamp(INJORA35T_STOP-velocity*INJORA35T_WIDTH
+			,INJORA35T_STOP - (INJORA35T_WIDTH*10)
+			,INJORA35T_STOP))
 		# pi.set_servo_pulsewidth(ESC_RIGHT, int(Clamp(1500-velocity*40,1100,1500)))
 		gpioController.gpio_PIN_PWM(ESC_RIGHT, pwm)
 	elif state == "backward":
 		velocity = int(request.args.get("vel")) #0~10 from mobile.
-		pwm = int(Clamp(INJORA35T_STOP+velocity*20,INJORA35T_STOP,1900))
+		pwm = int(Clamp(INJORA35T_STOP+velocity*INJORA35T_WIDTH
+			,INJORA35T_STOP
+			,INJORA35T_STOP + (INJORA35T_WIDTH*10)))
 		# pi.set_servo_pulsewidth(ESC_RIGHT, int(Clamp(1500+velocity*40,1500,1900)))
 		gpioController.gpio_PIN_PWM(ESC_RIGHT, pwm)
 	elif state == "stop":
@@ -110,12 +119,16 @@ def steerContorl():
 	state = request.args.get("state")
 	if state == "forward":
 		velocity = int(request.args.get("vel")) #0~10 from mobile.
-		pwm = int(Clamp(INJORA35T_STOP-velocity*20,1100,INJORA35T_STOP))
+		pwm = int(Clamp(INJORA35T_STOP-velocity*INJORA35T_WIDTH
+			,INJORA35T_STOP - (INJORA35T_WIDTH*10)
+			,INJORA35T_STOP))
 		# pi.set_servo_pulsewidth(ESC_LEFT, int(Clamp(1500-velocity*40,1100,1500)))
 		gpioController.gpio_PIN_PWM(ESC_LEFT, pwm)
 	elif state == "backward":
 		velocity = int(request.args.get("vel")) #0~10 from mobile.
-		pwm = int(Clamp(INJORA35T_STOP+velocity*20,INJORA35T_STOP,1900))
+		pwm = int(Clamp(INJORA35T_STOP+velocity*INJORA35T_WIDTH
+			,INJORA35T_STOP
+			,INJORA35T_STOP + (INJORA35T_WIDTH*10)))
 		# pi.set_servo_pulsewidth(ESC_LEFT, int(Clamp(1500+velocity*40,1500,1900)))
 		gpioController.gpio_PIN_PWM(ESC_LEFT, pwm)
 	elif state == "stop":
