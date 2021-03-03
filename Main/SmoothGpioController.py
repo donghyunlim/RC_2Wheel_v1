@@ -87,7 +87,8 @@ class GpioController():
                 gpioDeque.appendleft(pwm_next)
                 gpioDeque.appendleft(pin_next)
             except UnboundLocalError:
-                print("no more deque")
+                pass
+                # print("no more deque")
 
         threading.Timer(0.002, self.popDequePeriodically).start() #2ms per command. 500command(500hz) / 1second
         # threading.Timer(0.02, self.popDequePeriodically).start() #20ms per command. 50command(50hz) / 1second
