@@ -58,20 +58,20 @@ class GpioController():
                 else:
                     pwm_next = gpioDeque.popleft()
 
-            print("deque gpio command!"+" pin:"+str(pin)+"  pwm: "+str(pwm))
-            print("diff"+str((gpioLastPWM[pin]-pwm)))
+            # print("deque gpio command!"+" pin:"+str(pin)+"  pwm: "+str(pwm))
+            # print("diff"+str((gpioLastPWM[pin]-pwm)))
             if( (gpioLastPWM[pin]-pwm) > PWM_1_TICK):
                 gpioDeque.appendleft(pwm)
                 gpioDeque.appendleft(pin)
                 gpioLastPWM[pin] = gpioLastPWM[pin]-PWM_1_TICK
                 self.pi.set_servo_pulsewidth(pin, gpioLastPWM[pin])
-                print("too big change from GPIO PIN"+" pin:"+str(pin)+"  subs pwm one tick"+str(gpioLastPWM[pin]))
+                # print("too big change from GPIO PIN"+" pin:"+str(pin)+"  subs pwm one tick"+str(gpioLastPWM[pin]))
             elif( (gpioLastPWM[pin]-pwm) < -PWM_1_TICK):
                 gpioDeque.appendleft(pwm)
                 gpioDeque.appendleft(pin)
                 gpioLastPWM[pin] = gpioLastPWM[pin]+PWM_1_TICK
                 self.pi.set_servo_pulsewidth(pin, gpioLastPWM[pin])
-                print("too big change from GPIO PIN"+" pin:"+str(pin)+"  add pwm one tick"+str(gpioLastPWM[pin]))
+                # print("too big change from GPIO PIN"+" pin:"+str(pin)+"  add pwm one tick"+str(gpioLastPWM[pin]))
             elif( PWM_NETURAL-PWM_1_TICK<=gpioLastPWM[pin]
                 and PWM_NETURAL+PWM_1_TICK>=gpioLastPWM[pin]):
                 #If wanted pwm is in range DEFAULT-PWM_1_TICK <= (wantedPWM) <= DEFAULT+PWM_1_TICK
@@ -89,4 +89,5 @@ class GpioController():
             except UnboundLocalError:
                 print("no more deque")
 
-        threading.Timer(0.02, self.popDequePeriodically).start() #20ms per command. 50command(50hz) / 1second
+        threading.Timer(0.002, self.popDequePeriodically).start() #2ms per command. 500command(500hz) / 1second
+        # threading.Timer(0.02, self.popDequePeriodically).start() #20ms per command. 50command(50hz) / 1second

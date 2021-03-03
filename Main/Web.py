@@ -25,8 +25,9 @@ INJORA35T_WIDTH=40 #*10 pwm, 40 means it has +-400 pwm.
 pi = pigpio.pi()
 pi.set_servo_pulsewidth(ESC_LEFT, INJORA35T_STOP) #esc init
 pi.set_servo_pulsewidth(ESC_RIGHT, INJORA35T_STOP) #esc init
-pi.set_PWM_frequency(ESC_LEFT,50)
-pi.set_PWM_frequency(ESC_RIGHT,50)
+#WP-1060-BRUSHED holds upto 1khz.
+pi.set_PWM_frequency(ESC_LEFT,500) #supersafe -> 50hz
+pi.set_PWM_frequency(ESC_RIGHT,500) #supersafe -> 50hz
 
 RegistrationToSvr.__name__ #Do registration work to onff local server.
 # gpioController = GpioController.__name__ #GPIO fast-serized queue system(sort of)
