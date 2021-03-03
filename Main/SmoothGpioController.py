@@ -15,6 +15,7 @@ import pigpio
 
 GPIO_MAX_NUM_RPI4 = 27
 PWM_1_TICK = 10 #40 pwm can be change in one tick (50hz, 20ms)
+PWM_NETURAL = 1500 #depends on calibration, but 1500 always good.
 
 gpioDeque = deque(maxlen=4096) #[pinnumber, pwm] double info, 2048byte
 gpioLastPWM = [0 for i in range(GPIO_MAX_NUM_RPI4+1)] #init array with 0 value.
@@ -26,6 +27,8 @@ class GpioController():
     def setOurDefaultPWM(self, neturalPWM, oneTick):
         global PWM_1_TICK
         PWM_1_TICK = oneTick
+        global PWM_NETURAL
+        PWM_NETURAL = neturalPWM
         print("gpio signal trasmit every "+str(oneTick)+"ms!")
         i = 1
         while i <= GPIO_MAX_NUM_RPI4:
@@ -62,14 +65,20 @@ class GpioController():
                 gpioDeque.appendleft(pin)
                 gpioLastPWM[pin] = gpioLastPWM[pin]-PWM_1_TICK
                 self.pi.set_servo_pulsewidth(pin, gpioLastPWM[pin])
-                print("too big change from GPIO PIN"+" pin:"+str(pin)+"subs pwm one tick"+str(gpioLastPWM[pin]))
+                print("too big change from GPIO PIN"+" pin:"+str(pin)+"  subs pwm one tick"+str(gpioLastPWM[pin]))
             elif( (gpioLastPWM[pin]-pwm) < -PWM_1_TICK):
                 gpioDeque.appendleft(pwm)
                 gpioDeque.appendleft(pin)
                 gpioLastPWM[pin] = gpioLastPWM[pin]+PWM_1_TICK
                 self.pi.set_servo_pulsewidth(pin, gpioLastPWM[pin])
-                print("too big change from GPIO PIN"+" pin:"+str(pin)+"add pwm one tick"+str(gpioLastPWM[pin]))
-            else:
+                print("too big change from GPIO PIN"+" pin:"+str(pin)+"  add pwm one tick"+str(gpioLastPWM[pin]))
+            elif( PWM_NETURAL-PWM_1_TICK<=gpioLastPWM[pin]
+                and PWM_NETURAL+PWM_1_TICK>=gpioLastPWM[pin]):
+                #If wanted pwm is in range DEFAULT-PWM_1_TICK <= (wantedPWM) <= DEFAULT+PWM_1_TICK
+                #Then just set pwm to default PWM. otherwise we get wierd sound from motor.
+                self.pi.set_servo_pulsewidth(pin,PWM_NETURAL)
+                gpioLastPWM[pin] = PWM_NETURAL
+            else: #When we reached target pwm
                 self.pi.set_servo_pulsewidth(pin,pwm)
                 gpioLastPWM[pin] = pwm
             
