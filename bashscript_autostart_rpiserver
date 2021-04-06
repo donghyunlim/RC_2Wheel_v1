@@ -1,4 +1,0 @@
-#!/bin/bash
-# Script to start our raspberrypi server (web)
-echo "Doing autorun script..."
-python /home/donny/onff_rccar_rev1/Main/Web.py &
