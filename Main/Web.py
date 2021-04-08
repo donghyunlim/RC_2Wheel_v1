@@ -20,7 +20,8 @@ import requests
 ##PIN MAP
 ESC_LEFT=12 #left wheel
 ESC_RIGHT=13 #right wheel
-ESC_WEAPON=18 #ESC used weapon
+ESC_WEAPON=15 #ESC used weapon
+SERVO_WEAPON_1=18 #Servo used weapon
 CAMERA_X = 22 #cam X
 CAMERA_Y = 23 #cam y
 
@@ -94,10 +95,13 @@ def arm():
 	gpioController.gpio_PIN_PWM(ESC_RIGHT, 1500) # stop
 	pi.set_servo_pulsewidth(ESC_LEFT, INJORA35T_STOP)
 	pi.set_servo_pulsewidth(ESC_RIGHT, INJORA35T_STOP)
-	#weapon
+	#weapon(esc)
 	pi.set_PWM_frequency(ESC_WEAPON,50) # 20 times per a second.
 	gpioController.gpio_PIN_PWM(ESC_WEAPON, 1500) # stop
 	pi.set_servo_pulsewidth(ESC_WEAPON, INJORA35T_STOP)
+	#weapon(servo)
+	pi.set_PWM_frequency(SERVO_WEAPON_1,50) # 20 times per a second.
+	pi.set_servo_pulsewidth(SERVO_WEAPON_1, INJORA35T_STOP)
 	#camera
 	pi.set_PWM_frequency(CAMERA_X,50) #Hz, (pulse 1.52ms)---(rest 18.48ms)---(pulse 1.52ms)
 	pi.set_servo_pulsewidth(CAMERA_X,1500) #500(min) - 2500(max)
@@ -170,14 +174,14 @@ def weapon1Control():
 	state = request.args.get("state")
 	if state == "left":
 		#velocity = int(request.args.get("vel")) #0~10 from mobile.
-		pi.set_servo_pulsewidth(ESC_WEAPON, int(Clamp(INJORA35T_STOP+10*100,500,2500)))
+		pi.set_servo_pulsewidth(SERVO_WEAPON_1, int(Clamp(INJORA35T_STOP+10*100,500,2500)))
 	if state == "right":
 		#velocity = int(request.args.get("vel")) #0~10 from mobile.
-		pi.set_servo_pulsewidth(ESC_WEAPON, int(Clamp(INJORA35T_STOP-10*100,500,2500)))
+		pi.set_servo_pulsewidth(SERVO_WEAPON_1, int(Clamp(INJORA35T_STOP-10*100,500,2500)))
 	elif state == "stop":
-		pi.set_servo_pulsewidth(ESC_WEAPON, INJORA35T_STOP)
+		pi.set_servo_pulsewidth(SERVO_WEAPON_1, INJORA35T_STOP)
 	else: 
-		pi.set_servo_pulsewidth(ESC_WEAPON, INJORA35T_STOP)
+		pi.set_servo_pulsewidth(SERVO_WEAPON_1, INJORA35T_STOP)
 	return "Checked: " + state
 
 #Blade
