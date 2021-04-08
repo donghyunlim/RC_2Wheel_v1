@@ -24,6 +24,7 @@ ESC_WEAPON=15 #ESC used weapon
 SERVO_WEAPON_1=18 #Servo used weapon
 CAMERA_X = 22 #cam X
 CAMERA_Y = 23 #cam y
+PRESS_SENSOR = 4
 
 INJORA35T_STOP=1500 #should be init. (by manually)
 INJORA35T_WIDTH=40 #*10 pwm, 40 means it has +-400 pwm.
@@ -43,6 +44,9 @@ pi.set_servo_pulsewidth(ESC_WEAPON, INJORA35T_STOP)
 pi.set_PWM_frequency(ESC_LEFT,500) #supersafe -> 50hz, spec -> 500hz
 pi.set_PWM_frequency(ESC_RIGHT,500) #supersafe -> 50hz, spec -> 500hz
 pi.set_PWM_frequency(ESC_WEAPON,50) #supersafe -> 50hz
+
+pi.set_mode(PRESS_SENSOR, pigpio.INPUT) # flow sensor
+pi.set_pull_up_down(PRESS_SENSOR, pigpio.PUD_DOWN)
 
 # gpioController = GpioController.GpioController() #GPIO fast-serized queue system(sort of)
 gpioController = SmoothGpioController.GpioController() #GPIO fast-serized queue system(sort of)
@@ -76,6 +80,11 @@ def Clamp(val,vMin,vMax):
 		return vMax
 	else :
 		return val
+
+def pressCallback(gpio, level, tick):
+	ledController.setTargetBright(255,0,0)
+	ledController.blinking(4)
+	# print("inpuT!"+str(gpio)+str(level)+str(tick))
 
 @app.route("/")
 def connectionCheck(): 
@@ -247,5 +256,7 @@ def onUse():
 	return status
 
 if __name__ == "__main__":
+	cb = pi.callback(PRESS_SENSOR, pigpio.FALLING_EDGE, pressCallback)
+	#cb.cancel() #no need to cancel.
 	app.run(host="0.0.0.0")
 
