@@ -130,14 +130,14 @@ def damaged():
 def motorControl(): 
 	state = request.args.get("state")
 	if state == "forward":
-		velocity = int(request.args.get("vel")) #0~10 from mobile.
+		velocity = int(request.args.get("vel"))*0.75 #0~10 from mobile.
 		pwm = int(Clamp(INJORA35T_STOP-velocity*INJORA35T_WIDTH
 			,INJORA35T_STOP - (INJORA35T_WIDTH*10)
 			,INJORA35T_STOP))
 		# pi.set_servo_pulsewidth(ESC_RIGHT, int(Clamp(1500-velocity*40,1100,1500)))
 		gpioController.gpio_PIN_PWM(ESC_RIGHT, pwm)
 	elif state == "backward":
-		velocity = int(request.args.get("vel")) #0~10 from mobile.
+		velocity = int(request.args.get("vel")) #0~10 from mobile. 
 		pwm = int(Clamp(INJORA35T_STOP+velocity*INJORA35T_WIDTH
 			,INJORA35T_STOP
 			,INJORA35T_STOP + (INJORA35T_WIDTH*10)))
@@ -163,7 +163,7 @@ def steerContorl():
 		# pi.set_servo_pulsewidth(ESC_LEFT, int(Clamp(1500-velocity*40,1100,1500)))
 		gpioController.gpio_PIN_PWM(ESC_LEFT, pwm)
 	elif state == "backward":
-		velocity = int(request.args.get("vel")) #0~10 from mobile.
+		velocity = int(request.args.get("vel"))*0.85 #0~10 from mobile.
 		pwm = int(Clamp(INJORA35T_STOP+velocity*INJORA35T_WIDTH
 			,INJORA35T_STOP
 			,INJORA35T_STOP + (INJORA35T_WIDTH*10)))
