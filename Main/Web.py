@@ -26,6 +26,10 @@ CAMERA_X = 22 #cam X
 CAMERA_Y = 23 #cam y
 PRESS_SENSOR = 4
 
+KICK_SOLENOID = 24 #relay for solenoid
+KICK_SOLENOID_PWR_SUPPORT_1 = 25 #relay for solenoid
+KICK_SOLENOID_PWR_SUPPORT_2 = 8 #relay for solenoid
+
 INJORA35T_STOP=1500 #should be init. (by manually)
 INJORA35T_WIDTH=40 #*10 pwm, 40 means it has +-400 pwm.
 
@@ -38,6 +42,9 @@ Camera_X = 1500
 Camera_Y = 1000
 
 pi = pigpio.pi()
+pi.set_mode(KICK_SOLENOID, pigpio.OUTPUT)
+pi.set_mode(KICK_SOLENOID_PWR_SUPPORT_1, pigpio.OUTPUT)
+pi.set_mode(KICK_SOLENOID_PWR_SUPPORT_2, pigpio.OUTPUT)
 pi.set_servo_pulsewidth(ESC_LEFT, INJORA35T_STOP) #esc init
 pi.set_servo_pulsewidth(ESC_RIGHT, INJORA35T_STOP) #esc init
 pi.set_servo_pulsewidth(ESC_WEAPON, INJORA35T_STOP)
@@ -137,7 +144,7 @@ def motorControl():
 		# pi.set_servo_pulsewidth(ESC_RIGHT, int(Clamp(1500-velocity*40,1100,1500)))
 		gpioController.gpio_PIN_PWM(ESC_RIGHT, pwm)
 	elif state == "backward":
-		velocity = int(request.args.get("vel")) #0~10 from mobile. 
+		velocity = int(request.args.get("vel"))*0.62 #0~10 from mobile. 
 		pwm = int(Clamp(INJORA35T_STOP+velocity*INJORA35T_WIDTH
 			,INJORA35T_STOP
 			,INJORA35T_STOP + (INJORA35T_WIDTH*10)))
@@ -163,7 +170,7 @@ def steerContorl():
 		# pi.set_servo_pulsewidth(ESC_LEFT, int(Clamp(1500-velocity*40,1100,1500)))
 		gpioController.gpio_PIN_PWM(ESC_LEFT, pwm)
 	elif state == "backward":
-		velocity = int(request.args.get("vel"))*0.85 #0~10 from mobile.
+		velocity = int(request.args.get("vel")) #0~10 from mobile.
 		pwm = int(Clamp(INJORA35T_STOP+velocity*INJORA35T_WIDTH
 			,INJORA35T_STOP
 			,INJORA35T_STOP + (INJORA35T_WIDTH*10)))
@@ -215,6 +222,26 @@ def escWeaponControl():
 		gpioController.gpio_PIN_PWM(ESC_WEAPON, INJORA35T_STOP)
 	return ""
  
+#kick_solenoid
+@app.route("/kick_solenoid") #1500, 500 2500
+def kickSolenoid(): 
+	state = request.args.get("state")
+	if state == "run":
+		pi.write(KICK_SOLENOID, 1)
+		pi.write(KICK_SOLENOID_PWR_SUPPORT_1, 1)
+		pi.write(KICK_SOLENOID_PWR_SUPPORT_2, 1)
+		solenoidStopTimer = Timer(0.15, kickSolenoidStop)
+		solenoidStopTimer.start()
+	elif state == "stop":
+		pi.write(KICK_SOLENOID, 0)
+		pi.write(KICK_SOLENOID_PWR_SUPPORT_1, 0)
+		pi.write(KICK_SOLENOID_PWR_SUPPORT_2, 0)
+	else: 
+		pi.write(KICK_SOLENOID, 0)
+		pi.write(KICK_SOLENOID_PWR_SUPPORT_1, 0)
+		pi.write(KICK_SOLENOID_PWR_SUPPORT_2, 0)
+	return "Checked: " + state
+
 @app.route("/camera")
 def cameraControl():
 	global Camera_X,Camera_Y
@@ -254,6 +281,12 @@ def onUse():
 	except requests.exceptions.HTTPError as e:
 		print('bam! error occured while connecting to the static server')
 	return status
+
+def kickSolenoidStop():
+	pi.write(KICK_SOLENOID, 0)
+	pi.write(KICK_SOLENOID_PWR_SUPPORT_1, 0)
+	pi.write(KICK_SOLENOID_PWR_SUPPORT_2, 0)
+	# print('kick solenoid stop')
 
 if __name__ == "__main__":
 	cb = pi.callback(PRESS_SENSOR, pigpio.FALLING_EDGE, pressCallback)
