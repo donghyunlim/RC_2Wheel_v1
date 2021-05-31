@@ -1,0 +1,1 @@
+DEVCIE_TYPE = 'Rc2WheelV1'
