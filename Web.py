@@ -32,7 +32,9 @@ KICK_SOLENOID_PWR_SUPPORT_1 = 25 #relay for solenoid
 KICK_SOLENOID_PWR_SUPPORT_2 = 8 #relay for solenoid
 
 INJORA35T_STOP=1500 #should be init. (by manually)
-INJORA35T_WIDTH=40 #*10 pwm, 40 means it has +-400 pwm.
+INJORA35T_WIDTH=25 #*10 pwm, 40 means it has +-400 pwm.
+INJORA35T_OFFSET_MIN_WORK_PWM=160 #Offset for minimum work(starts rotate) (21T PWM 70) for now
+#210601 donny - for now, 2wheel minimun operative pwm is about +-160.
 
 Camera_X_MAX = 2500 # 2520, on origin code
 Camera_X_MIN = 520
@@ -140,15 +142,15 @@ def damaged():
 def motorControl(): 
 	state = request.args.get("state")
 	if state == "forward":
-		velocity = int(request.args.get("vel"))*0.75 #0~10 from mobile.
-		pwm = int(Clamp(INJORA35T_STOP-velocity*INJORA35T_WIDTH
+		velocity = int(request.args.get("vel"))*0.3 #0~10 from mobile.
+		pwm = int(Clamp(INJORA35T_STOP-INJORA35T_OFFSET_MIN_WORK_PWM-velocity*INJORA35T_WIDTH
 			,INJORA35T_STOP - (INJORA35T_WIDTH*10)
 			,INJORA35T_STOP))
 		# pi.set_servo_pulsewidth(ESC_RIGHT, int(Clamp(1500-velocity*40,1100,1500)))
 		gpioController.gpio_PIN_PWM(ESC_RIGHT, pwm)
 	elif state == "backward":
-		velocity = int(request.args.get("vel"))*0.62 #0~10 from mobile. 
-		pwm = int(Clamp(INJORA35T_STOP+velocity*INJORA35T_WIDTH
+		velocity = int(request.args.get("vel"))*0.3 #0~10 from mobile. 
+		pwm = int(Clamp(INJORA35T_STOP+INJORA35T_OFFSET_MIN_WORK_PWM+velocity*INJORA35T_WIDTH
 			,INJORA35T_STOP
 			,INJORA35T_STOP + (INJORA35T_WIDTH*10)))
 		# pi.set_servo_pulsewidth(ESC_RIGHT, int(Clamp(1500+velocity*40,1500,1900)))
@@ -166,15 +168,15 @@ def motorControl():
 def steerContorl():
 	state = request.args.get("state")
 	if state == "forward":
-		velocity = int(request.args.get("vel")) #0~10 from mobile.
-		pwm = int(Clamp(INJORA35T_STOP-velocity*INJORA35T_WIDTH
+		velocity = int(request.args.get("vel"))*1.2 #0~10 from mobile.
+		pwm = int(Clamp(INJORA35T_STOP-INJORA35T_OFFSET_MIN_WORK_PWM-velocity*INJORA35T_WIDTH
 			,INJORA35T_STOP - (INJORA35T_WIDTH*10)
 			,INJORA35T_STOP))
 		# pi.set_servo_pulsewidth(ESC_LEFT, int(Clamp(1500-velocity*40,1100,1500)))
 		gpioController.gpio_PIN_PWM(ESC_LEFT, pwm)
 	elif state == "backward":
-		velocity = int(request.args.get("vel")) #0~10 from mobile.
-		pwm = int(Clamp(INJORA35T_STOP+velocity*INJORA35T_WIDTH
+		velocity = int(request.args.get("vel"))*1.2 #0~10 from mobile.
+		pwm = int(Clamp(INJORA35T_STOP+INJORA35T_OFFSET_MIN_WORK_PWM+velocity*INJORA35T_WIDTH
 			,INJORA35T_STOP
 			,INJORA35T_STOP + (INJORA35T_WIDTH*10)))
 		# pi.set_servo_pulsewidth(ESC_LEFT, int(Clamp(1500+velocity*40,1500,1900)))
