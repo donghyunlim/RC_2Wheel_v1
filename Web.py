@@ -76,6 +76,8 @@ heartbeater.heartbeating()
 
 #Led Controller (ws2812, neopixel)
 ledController = LedController.LedControl()
+#flags
+isCharging = False
 
 app = Flask(__name__)
 
@@ -226,18 +228,22 @@ def escWeaponControl():
 #kick_solenoid
 @app.route("/kick_solenoid") #1500, 500 2500
 def kickSolenoid(): 
+	global isCharging
 	state = request.args.get("state")
-	if state == "run":
+	if state == "run" and not isCharging:
+		isCharging = True
 		pi.write(KICK_SOLENOID, 1)
 		pi.write(KICK_SOLENOID_PWR_SUPPORT_1, 1)
 		pi.write(KICK_SOLENOID_PWR_SUPPORT_2, 1)
 		solenoidStopTimer = Timer(0.15, kickSolenoidStop)
 		solenoidStopTimer.start()
 	elif state == "stop":
+		isCharging = False
 		pi.write(KICK_SOLENOID, 0)
 		pi.write(KICK_SOLENOID_PWR_SUPPORT_1, 0)
 		pi.write(KICK_SOLENOID_PWR_SUPPORT_2, 0)
 	else: 
+		isCharging = False
 		pi.write(KICK_SOLENOID, 0)
 		pi.write(KICK_SOLENOID_PWR_SUPPORT_1, 0)
 		pi.write(KICK_SOLENOID_PWR_SUPPORT_2, 0)
@@ -284,6 +290,8 @@ def onUse():
 	return status
 
 def kickSolenoidStop():
+	global isCharging
+	isCharging = False
 	pi.write(KICK_SOLENOID, 0)
 	pi.write(KICK_SOLENOID_PWR_SUPPORT_1, 0)
 	pi.write(KICK_SOLENOID_PWR_SUPPORT_2, 0)
